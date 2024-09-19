@@ -1,17 +1,33 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const pino = require('express-pino-logger')();
+const express = require("express");
+const bodyParser = require("body-parser");
+const pino = require("express-pino-logger")();
+const apiRoutes = require("./services/api/apiRoutes");
+
+const HostawayIntegration = require("./services/pmsIntergrations/integrations/hostaway/hostawayIntegration");
+const LocalStorageService = require("./services/storage/LocalStorageService");
 
 const app = express();
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use(pino);
 
-app.get('/api/greeting', (req, res) => {
-  const name = req.query.name || 'World';
-  res.setHeader('Content-Type', 'application/json');
-  res.send(JSON.stringify({ greeting: `Hello ${name}!` }));
-});
+app.use("/api", apiRoutes);
 
-app.listen(3001, () =>
-  console.log('Express server is running on localhost:3001')
-);
+const hostawayIntegration = new HostawayIntegration();
+
+(async () => {
+  try {
+    await hostawayIntegration.fetchBookings();
+
+    const localStorageService = new LocalStorageService();
+    const bookings = localStorageService.getReservations();
+
+    console.log("Bookings fetched and stored in LocalStorageService:");
+    console.log(bookings);
+  } catch (error) {
+    console.error("Error during initialization:", error);
+  }
+})();
+
+app.listen(3001, () => {
+  console.log("Express server is running on localhost:3001");
+});
