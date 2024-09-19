@@ -1,4 +1,4 @@
-const PMSIntegration = require("../../pmsIntegrationFactory");
+const PMSIntegration = require("../../pmsIntegration");
 const fetch = require("node-fetch");
 const { getToken } = require("./tokenManager");
 const LocalStorageService = require("../../../storage/LocalStorageService");
