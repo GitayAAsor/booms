@@ -30,8 +30,8 @@ class HostawayIntegration extends PMSIntegration {
 
       const bookings = await response.json();
 
-      const storage = new LocalStorageService();
-      storage.saveReservations(
+      const localStorage = new LocalStorageService();
+      localStorage.saveReservations(
         bookings.result.map((booking) => ({
           id: booking.id,
           checkIn: booking.arrivalDate,
