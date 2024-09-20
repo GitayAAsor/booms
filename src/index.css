@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+* {
+  @apply box-border m-0 p-0;
+}
+
+body {
+  @apply bg-gray-200 p-5;
+}
