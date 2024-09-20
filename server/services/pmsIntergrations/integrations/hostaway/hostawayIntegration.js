@@ -1,7 +1,8 @@
 const PMSIntegration = require("../../pmsIntegration");
 const fetch = require("node-fetch");
 const { getToken } = require("./tokenManager");
-const LocalStorageService = require("../../../storage/LocalStorageService");
+
+const URL = process.env.HOSTAWAY_URL;
 
 class HostawayIntegration extends PMSIntegration {
   constructor() {
@@ -10,44 +11,40 @@ class HostawayIntegration extends PMSIntegration {
 
   async fetchBookings() {
     try {
-      const token = await getToken();
-
-      const response = await fetch("https://api.hostaway.com/v1/reservations", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.status === 403) {
-        await fetchNewToken();
-        return this.fetchBookings();
-      }
+      const token = await this.getTokenWithRefresh();
+      const response = await this.makeRequest(token);
 
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        this.handleFetchError(response);
       }
 
       const bookings = await response.json();
-
-      const localStorage = new LocalStorageService();
-      localStorage.saveReservations(
-        bookings.result.map((booking) => ({
-          id: booking.id,
-          checkIn: booking.arrivalDate,
-          checkOut: booking.departureDate,
-          price: booking.totalPrice,
-          created_at: booking.reservationDate,
-          guest_name: booking.guestName,
-          listingId: booking.listingMapId,
-          status: booking.status,
-          channel_name: booking.channelName,
-        }))
-      );
-      return bookings;
+      return bookings.result;
     } catch (error) {
       console.error("Error fetching bookings from Hostaway:", error);
       throw error;
+    }
+  }
+
+  async getTokenWithRefresh() {
+    return getToken();
+  }
+
+  async makeRequest(token) {
+    return fetch(URL, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  handleFetchError(response) {
+    if (response.status === 403) {
+      console.warn("Received 403 Forbidden. Attempting to refresh the token.");
+      return this.getTokenWithRefresh().then(() => this.fetchBookings());
+    } else {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
   }
 }
