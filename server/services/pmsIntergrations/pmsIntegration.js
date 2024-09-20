@@ -4,4 +4,10 @@ class PMSIntegration {
   }
 }
 
+// more methods
+
+// more methods
+
+// more methods
+
 module.exports = PMSIntegration;
